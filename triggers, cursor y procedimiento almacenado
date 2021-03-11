@@ -1,0 +1,59 @@
+CREATE TRIGGER tr_servicios
+   ON  servicios
+   after insert, update 
+AS 
+
+declare @tipoServicioId int 
+declare @precio numeric
+declare @tiempo time 
+declare @horas int
+
+set @tipoServicioId = (select tipo_ser_id from inserted);
+set @precio = (select tipo_ser_precio from inserted);
+set @tiempo = (select tipo_ser_tiempo from inserted);
+set @horas = DATEPART(HOUR, @tiempo);
+
+if  @precio >= 0
+begin 
+    update servicios
+    set promedio  = @horas * @precio
+    where tipo_ser_id =@tipoServicioId
+end
+else 
+begin 
+    raiserror ('realizar el servicio de embalsamamiento a un difunto de más de 48 horas transcurridas desde su defunción' )
+end
+
+//CURSOR //
+	declare @empl_nombre varchar(50)
+	declare @tipo_empleado varchar (50)
+	declare @ser_id varchar(50)
+	
+	declare tr_empleado cursor
+	for select empl_nombre,tipo_empleado,ser_id from empleado
+
+	open tr_empleado 
+	fetch tr_empleado into @empl_nombre,@tipo_empleado,@ser_id 
+	
+	while (@@FETCH_STATUS=0)
+	begin 
+	print @empl_nombre+''+@tipo_empleado+''+@ser_id 
+	fetch tr_empleado into @empl_nombre,@tipo_empleado,@ser_id 
+	end
+	close tr_empleado
+	deallocate tr_empleado 
+  
+  //PROCEDIMIENTO ALMACENADO//
+  
+ CREATE PROCEDURE  pa_servicios
+@tipo_ser_nombre nvarchar (50)
+as 
+select * from servicios  
+where tipo_ser_nombre =@tipo_ser_nombre
+
+go 
+
+exec pa_servicios  'embalsamiento'
+
+
+drop procedure pa_servicios 
